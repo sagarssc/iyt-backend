@@ -17,7 +17,7 @@ class RegistrationViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'])
     def checkout(self, request, *args, **kwargs):
-        import ipdb;ipdb.set_trace()
+        #import ipdb;ipdb.set_trace()
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             response = serializer.add_registeration(request.data)
