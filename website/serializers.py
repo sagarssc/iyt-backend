@@ -1,11 +1,17 @@
 from rest_framework import serializers
-from .models import Blog, Registration, Payment
+from .models import Blog, Registration, Payment, Query
 from .razorpay import Razorpay
 
 class BlogSerializer(serializers.ModelSerializer):
     class Meta:
         model = Blog
         fields = ('id', 'title', 'content', 'image', 'created_at', 'description', 'category')
+        
+
+class QuerySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Query
+        fields = ('id', 'name', 'email', 'phone_number', 'message')
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
