@@ -81,3 +81,10 @@ class Registration(TimeStamp):
         else:
             return {"status": "Failed","reason": "payment validation failed"}
         
+        
+
+class Query(TimeStamp):
+    name = models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=15)
+    email = models.EmailField()
+    message = models.TextField()
