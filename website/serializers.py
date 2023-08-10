@@ -5,7 +5,7 @@ from .razorpay import Razorpay
 class BlogSerializer(serializers.ModelSerializer):
     class Meta:
         model = Blog
-        fields = ('id', 'title', 'content', 'image', 'created_at', 'description', 'category')
+        fields = ('id', 'title', 'content', 'image_path', 'created_at', 'description', 'category')
         
 
 class QuerySerializer(serializers.ModelSerializer):

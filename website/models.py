@@ -3,6 +3,8 @@ from django.utils import timezone
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from .razorpay import Razorpay
+from .utils import trigger_email, trigger_error_email
+import traceback
 # from django_mysql.models import JSONField
 
 class TimeStamp(models.Model):
@@ -14,20 +16,20 @@ class TimeStamp(models.Model):
 
 class Blog(TimeStamp):
     title = models.CharField(max_length=200)
-    content = models.TextField()
+    content = models.JSONField()
     category = models.CharField(max_length=50)
-    image = models.ImageField(upload_to='blog_images/', blank=True, null=True)
+    image_path = models.TextField()
     description = models.CharField(max_length=500)
 
-    def save(self, *args, **kwargs):
-        if self.image:
-            # generate a unique filename to avoid overwriting existing files
-            filename = f'{self.title}_{timezone.now().strftime("%Y%m%d-%H%M%S")}.jpg'
-            # save the image to the default storage location
-            saved_path = default_storage.save(f'blog_images/{filename}', ContentFile(self.image.read()))
-            # set the image field to the path of the saved file
-            self.image = saved_path
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if self.image:
+    #         # generate a unique filename to avoid overwriting existing files
+    #         filename = f'{self.title}_{timezone.now().strftime("%Y%m%d-%H%M%S")}.jpg'
+    #         # save the image to the default storage location
+    #         saved_path = default_storage.save(f'blog_images/{filename}', ContentFile(self.image.read()))
+    #         # set the image field to the path of the saved file
+    #         self.image = saved_path
+    #     super().save(*args, **kwargs)
 
 class Payment(TimeStamp):
     STATUS_CHOICES = [
@@ -67,20 +69,26 @@ class Registration(TimeStamp):
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='P')
     cancelation_reason = models.CharField(max_length=255, null=True)
     additional_data = models.JSONField(default={})
+    # registration_no = models.CharField(max_length=15)
     
     def order_successful(self, payment_id):
-        razorpay = Razorpay()
-        res = razorpay.validate_pyment(payment_id, self.payment)
-        if res:
-            self.status = 'S'
-            self.save()
-            self.payment.status = 'C'
-            self.payment.txn_id = payment_id
-            self.payment.save()
-            return {"status": "Success"}
-        else:
-            return {"status": "Failed","reason": "payment validation failed"}
-        
+        try:
+            razorpay = Razorpay()
+            res = razorpay.validate_pyment(payment_id, self.payment)
+            trigger_email()
+            if res:
+                self.status = 'S'
+                self.save()
+                self.payment.status = 'C'
+                self.payment.txn_id = payment_id
+                self.payment.save()
+                return {"status": "Success"}
+            else:
+                return {"status": "Failed","reason": "payment validation failed"}
+        except Exception as e:
+            print(traceback.format_exc())
+            trigger_error_email(str(traceback.format_exc()))
+            return {"status": "Failed","reason": "payment validation failed"}    
         
 
 class Query(TimeStamp):
