@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from .models import Blog, Registration, Query
 from .serializers import BlogSerializer, RegistrationSerializer, QuerySerializer
 import traceback
-
+from .utils import trigger_error_email
 
 class BlogViewSet(viewsets.ModelViewSet):
     queryset = Blog.objects.all()
@@ -29,6 +29,7 @@ class QueryViewSet(viewsets.ModelViewSet):
                 return Response({"error":error,"status":"failed"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             print(traceback.format_exc)
+            trigger_error_email(str(serializer.__dict__))
             return Response({"errors":serializer.errors, "status":"failed"}, status=status.HTTP_400_BAD_REQUEST)
 
 class RegistrationViewSet(viewsets.ModelViewSet):
@@ -46,6 +47,7 @@ class RegistrationViewSet(viewsets.ModelViewSet):
             return Response({"data":response}, status=status.HTTP_201_CREATED)
         else:
             print(traceback.format_exc())
+            trigger_error_email(str(serializer.__dict__))
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=False, methods=['post'])
@@ -58,5 +60,7 @@ class RegistrationViewSet(viewsets.ModelViewSet):
         if res['status'] == 'Success':
             return Response({"status":"success"}, status=status.HTTP_201_CREATED)
         else:
+            print(res)
+            trigger_error_email(str(res))
             return Response({"status":"failed"}, status=status.HTTP_400_BAD_REQUEST)
         
