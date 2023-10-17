@@ -10,7 +10,7 @@ class Razorpay():
         self.razorpay_client = razorpay.Client(auth=(self.key, self.secret))
 
     
-    def create_payment_link(self, data):
+    def create_order(self, data):
         amount = data.get("amount")  # Replace with the actual amount
         currency = 'INR'  # Replace with the actual currency code
         order = self.razorpay_client.order.create({'amount': amount, 'currency': currency})
