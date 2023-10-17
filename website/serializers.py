@@ -23,20 +23,26 @@ class RegistrationSerializer(serializers.ModelSerializer):
     def add_registeration(self, *args, **kwargs):
       print("validated data  ;", self.validated_data)
       order_data = {'amount': int(self.validated_data.get('amount'))}
-      order = Razorpay().create_order(order_data)
+      registration = super().create(self.validated_data)
+      
+      payment_details = Razorpay().create_payment_link(self.validated_data, registration.id)
       payment_data = {
-        'order_id' : order['id'],
-        'amount' : int(self.validated_data.get('amount')),
-        'description' : 'Payment for IYT',
-        'status': 'P',
-        'additional_data': {'create': order}
+        # "order_id" : order['id'],
+        "amount" : int(self.validated_data.get('amount')),
+        "description" : 'Payment for IYT',
+        "status": 'P',
+        "payment_link": payment_details.get("short_url"),
+        "plid": payment_details.get("id"),
+        "additional_data": {'create': payment_details}
       }
       payment_serializer = PaymentSerializer(data=payment_data)
       payment_serializer.is_valid(raise_exception=True)
       payment = payment_serializer.save()
-      self.validated_data['payment_id'] = payment.id
-      registration = super().create(self.validated_data)
-      return {'registration_id': registration.id, 'order_id': order['id']}
+    #   self.validated_data['payment_id'] = payment.id
+      registration.payment_id = payment.id
+      registration.save()
+    #   registration = super().create(self.validated_data)
+      return {'registration_id': registration.id}
       
       
       

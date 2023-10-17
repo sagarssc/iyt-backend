@@ -4,11 +4,12 @@ from email.mime.multipart import MIMEMultipart
 
 # Email configuration
 
-def trigger_email():
+def trigger_email(registration_number, name, email, phone_number):
     sender_email = 'sagarsinghchauhan49@gmail.com'
     receiver_email = 'sagarsinghchauhan49@gmail.com'
     subject = 'Registration Successfull'
-    message = 'registration ID : IYT1231TEST'
+    message = '''Hi {},
+                your registration is completed for IYT teacher training course your registration no is {}.'''.format(name, registration_number)
 
     # Gmail SMTP server configuration
     smtp_server = 'smtp.gmail.com'
