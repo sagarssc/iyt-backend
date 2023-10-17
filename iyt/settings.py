@@ -81,8 +81,11 @@ WSGI_APPLICATION = 'iyt.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'iyt',
+        'USER': 'sagar',
+        'PASSWORD': 'sagar',
+        'HOST': '3.90.188.119',  # Or the hostname of your MySQL server
     }
 }
 
