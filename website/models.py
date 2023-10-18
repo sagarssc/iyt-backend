@@ -23,12 +23,33 @@ class Blog(TimeStamp):
     image_path = models.TextField()
     description = models.CharField(max_length=500)
 
+
+class Course(TimeStamp):
+    title = models.CharField(max_length=255)
+    hrs = models.CharField(max_length=10)
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self) -> str:
+        return str(self.id)+" :- "+self.title
+    
+class Batches(TimeStamp):
+    month = models.CharField(max_length=255)
+    year = models.CharField(max_length=10)
+    start_date = models.CharField(max_length=15)
+    end_date = models.CharField(max_length=15)
+    fee = models.CharField(max_length=6, null=True)
+    is_completed = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, null=True)
+    
+
 class Payment(TimeStamp):
     STATUS_CHOICES = [
         ('P', 'Pending'),
         ('C', 'Completed'),
         ('F', 'Failed'),
         ('R', 'Refunded'),
+        ('E', 'Expired'),
     ]
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.CharField(max_length=255)
@@ -40,6 +61,9 @@ class Payment(TimeStamp):
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='P')
     additional_data = models.JSONField(default=dict)
     # client.payment_link.fetch(paymentLinkId)
+    
+    def __str__(self) -> str:
+        return str(self.id) +":-   "+str(self.payment_link)
 
 
 class Registration(TimeStamp):
@@ -63,25 +87,19 @@ class Registration(TimeStamp):
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
     payment = models.ForeignKey(Payment, on_delete=models.CASCADE, null=True)
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='P')
-    cancelation_reason = models.CharField(max_length=255, null=True)
-    additional_data = models.JSONField(default=dict)
-    registration_no = models.CharField(max_length=16)
+    cancellation_reason = models.CharField(max_length=255, null=True)
+    additional_data = models.JSONField(default=dict, null=True)
+    registration_no = models.CharField(max_length=16, null=True)
     
-    def order_successful(self, payment_id):
+    def order_successful(self):
         try:
-            razorpay = Razorpay()
-            res = razorpay.validate_pyment(payment_id, self.payment)
-            if res:
-                self.status = 'S'
-                self.registration_number = self.generate_registration_no()
-                self.save()
-                self.payment.status = 'C'
-                self.payment.txn_id = payment_id
-                self.payment.save()
-                trigger_email(self.registration_number, self.name, self.email, self.phone_number)
-                return {"status": "Success"}
-            else:
-                return {"status": "Failed","reason": "payment validation failed"}
+            if self.registration_no:
+                raise Exception("Registration no already generated.")
+            self.status = 'S'
+            self.registration_no = self.generate_registration_no()
+            self.save()
+            trigger_email(self.registration_no, self.name, self.email, self.phone_number)
+            return {"status": "Success"}
         except Exception as e:
             print(traceback.format_exc())
             trigger_error_email(str(traceback.format_exc()))

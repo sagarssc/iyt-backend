@@ -2,7 +2,7 @@ from rest_framework import viewsets
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from .models import Blog, Registration, Query
+from .models import Blog, Registration, Query, Batches
 from .serializers import BlogSerializer, RegistrationSerializer, QuerySerializer
 import traceback
 from .utils import trigger_error_email
@@ -10,6 +10,36 @@ from .utils import trigger_error_email
 class BlogViewSet(viewsets.ModelViewSet):
     queryset = Blog.objects.all()
     serializer_class = BlogSerializer
+
+# 100: {
+#     text: "100 Hrs Teacher Training",
+#     fee: "499",
+#     slots: [{value:"April", label:"April 2023 (1st - 12th)"},
+#             {value:"May", label:"May 2023 (1st - 12th)"},
+#             {value:"June", label:"June 2023 (1st - 12th)"},
+#             {value:"July", label:"July 2023 (1st - 12th)"}]
+#   },
+class BatchViewSet(viewsets.ModelViewSet):
+    queryset = Batches.objects.all()
+    
+    @action(detail=False, methods=['get'])
+    def get_batches(self, request, *args, **kwargs):
+        batches = self.queryset.filter(is_active=True).values("id","month","year","start_date","end_date","fee","course__title","course__hrs")
+        data = {}
+        for batch in batches:
+            batch_name = batch["month"]+" "+ batch["year"]+" ("+batch["start_date"]+" - "+batch["end_date"]+")"
+            if batch["course__hrs"] in data:
+                course = data[batch["course__hrs"]]
+                course["slots"].append({"value":batch["id"], "label": batch_name})
+            else:
+                data[batch["course__hrs"]] = {
+                    "text": batch["course__title"],
+                    "fee": batch["fee"],
+                    "slots": [{"value":batch["id"], "label": batch_name}]
+                }
+                # data[batch["course__hrs"]] = [batch_name]
+        return Response({"batches":data,"status":"success"}, status=status.HTTP_200_OK)
+        
     
 class QueryViewSet(viewsets.ModelViewSet):
     queryset = Query.objects.all()
